@@ -8,12 +8,14 @@ public class DAO {
 
     public DAO() {
         if (con == null) {
+            // 1. Cổng chuẩn của MySQL xịn là 3306
             String dbUrl = "jdbc:mysql://localhost:3306/db_quanlychbandoannhanh?autoReconnect=true&useSSL=false";
             String dbClass = "com.mysql.cj.jdbc.Driver";
+
             try {
                 Class.forName(dbClass);
-                // Sửa "root" và "password" thành "kimo"
-                con = DriverManager.getConnection(dbUrl, "kimo", "kimo"); 
+                con = DriverManager.getConnection(dbUrl, "root", "kimo"); 
+
             } catch (Exception e) {
                 e.printStackTrace();
             }

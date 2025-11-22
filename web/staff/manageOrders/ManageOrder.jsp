@@ -1,5 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" 
-    import="dao.OrderDAO, model.Order, java.util.ArrayList"%>
+    import="dao.OrderDAO, model.Order, model.Staff, java.util.ArrayList"%>
 <!DOCTYPE html>
 <html>
 <head>
@@ -13,21 +13,40 @@
 </head>
 <body>
     <%
-    if(session.getAttribute("nhanvien") == null) { response.sendRedirect("../../member/Login.jsp"); return; }
+    // Kiểm tra đăng nhập
+    Staff staff = (Staff) session.getAttribute("nhanvien");
+    if(staff == null) { response.sendRedirect("../../member/Login.jsp"); return; }
 
+    //Lấy các list từ Session
     ArrayList<Order> pendingList = (ArrayList<Order>) session.getAttribute("pendingOrderList");
-    ArrayList<Order> approvedList = (ArrayList<Order>) session.getAttribute("acceptedOrderList");
-    ArrayList<Order> cancelledList = (ArrayList<Order>) session.getAttribute("canceledOrderList");
+    ArrayList<Order> acceptedList = (ArrayList<Order>) session.getAttribute("acceptedOrderList");
+    ArrayList<Order> canceledList = (ArrayList<Order>) session.getAttribute("canceledOrderList");
 
-    if(request.getParameter("back") == null || pendingList == null) {
+    // Nếu chưa có hoặc có yêu cầu tải lại 
+    if(request.getParameter("back") != null || pendingList == null) {
         OrderDAO dao = new OrderDAO();
-        pendingList = dao.getOrdersByStatus("Đã đặt");
-        approvedList = dao.getOrdersByStatus("Đã duyệt");
-        cancelledList = dao.getOrdersByStatus("Đã hủy");
+        ArrayList<Order> allOrders = dao.getOrderInfo(staff); // Lấy tất cả đơn hàng
         
+        // Khởi tạo lại các list
+        pendingList = new ArrayList<>();
+        acceptedList = new ArrayList<>();
+        canceledList = new ArrayList<>();
+        
+        // Lọc dữ liệu 
+        for(Order o : allOrders) {
+            if("Đã đặt".equalsIgnoreCase(o.getStatus())) {
+                pendingList.add(o);
+            } else if("Đã duyệt".equalsIgnoreCase(o.getStatus())) {
+                acceptedList.add(o);
+            } else if("Đã hủy".equalsIgnoreCase(o.getStatus())) {
+                canceledList.add(o);
+            }
+        }
+        
+        // Lưu lại vào Session
         session.setAttribute("pendingOrderList", pendingList);
-        session.setAttribute("acceptedOrderList", approvedList);
-        session.setAttribute("canceledOrderList", cancelledList);
+        session.setAttribute("acceptedOrderList", acceptedList);
+        session.setAttribute("canceledOrderList", canceledList);
     }
     %>
 
@@ -43,13 +62,21 @@
         <tbody>
             <% int i=1; for(Order o : pendingList) { %>
             <tr>
-                <td><%=i++%></td><td><%=o.getCode()%></td><td><%=o.getCustomerName()%></td><td><%=o.getCustomerPhone()%></td><td><%=o.getCustomerAddress()%></td>
-                <td><%=o.getOrderedTime()%></td><td><%=o.getNote()%></td><td><%=o.getFoodListAsString()%></td>
-                <td><%=String.format("%,.0f", o.getDiscount())%></td><td><%=String.format("%,.0f", o.getShipFee())%></td>
-                <td><%=String.format("%,.0f", o.getTotal())%></td><td><%=o.getStatus()%></td>
+                <td><%=i++%></td>
+                <td><%=o.getCode()%></td>
+                <td><%=o.getCustomerName()%></td>
+                <td><%=o.getCustomerPhone()%></td>
+                <td><%=o.getCustomerAddress()%></td>
+                <td><%=o.getOrderedTime()%></td>
+                <td><%=o.getNote()%></td>
+                <td><%=o.getFoodListAsString()%></td>
+                <td><%=String.format("%,.0f", o.getDiscount())%></td>
+                <td><%=String.format("%,.0f", o.getShipFee())%></td>
+                <td><%=String.format("%,.0f", o.getTotal())%></td>
+                <td><%=o.getStatus()%></td>
                 <td>
-                    <a href="doApproveOrder.jsp?id=<%=o.getId()%>">Duyệt</a>/
-                    <a href="CancelOrder.jsp?id=<%=o.getId()%>">Hủy</a>/
+                    <a href="doApproveOrder.jsp?code=<%=o.getCode()%>">Duyệt</a> / 
+                    <a href="CancelOrder.jsp?code=<%=o.getCode()%>">Hủy</a> / 
                     <a href="EditOrder.jsp?code=<%=o.getCode()%>">Chỉnh sửa</a>
                 </td>
             </tr>
@@ -60,7 +87,7 @@
     <h3>DS các đơn hàng đã duyệt</h3>
     <table>
         <tr><th>TT</th><th>Mã ĐH</th><th>Tên KH</th><th>TG duyệt</th></tr>
-        <% int j=1; for(Order o : approvedList) { %>
+        <% int j=1; for(Order o : acceptedList) { %>
         <tr><td><%=j++%></td><td><%=o.getCode()%></td><td><%=o.getCustomerName()%></td><td><%=o.getOrderedTime()%></td></tr>
         <% } %>
     </table>
@@ -68,7 +95,7 @@
     <h3>DS các đơn hàng đã hủy</h3>
     <table>
         <tr><th>TT</th><th>Mã ĐH</th><th>Tên KH</th><th>TG hủy</th><th>Lý do hủy</th></tr>
-        <% int k=1; for(Order o : cancelledList) { %>
+        <% int k=1; for(Order o : canceledList) { %>
         <tr><td><%=k++%></td><td><%=o.getCode()%></td><td><%=o.getCustomerName()%></td><td><%=o.getOrderedTime()%></td><td><%=o.getNote()%></td></tr>
         <% } %>
     </table>
