@@ -13,22 +13,16 @@
 </head>
 <body>
     <%
-    // Lấy ID đơn hàng từ session để quay lại đúng chỗ
-    Object orderIdObj = session.getAttribute("currentOrderId");
-    // Nếu mất session (do timeout), quay về ManageOrder
-    if(orderIdObj == null) {
-        // Tìm trong OrderToEdit nếu có
-        model.Order o = (model.Order) session.getAttribute("orderToEdit");
-        if(o != null) orderIdObj = o.getId();
-        else {
-            response.sendRedirect("ManageOrder.jsp");
-            return;
-        }
+    //if session erase orderToEdit
+    if (session.getAttribute("orderToEdit") == null) {
+        response.sendRedirect("ManageOrder.jsp");
+        return; 
     }
     %>
-
+    
     <h3>Search food and combo view</h3>
     <form action="SearchFoodAndCombo.jsp" method="post">
+        <!-- show keyword if existed -->
         Ô nhập tên: <input type="text" name="keyword" value="<%=request.getParameter("keyword")==null?"":request.getParameter("keyword")%>"> 
         <input type="submit" value="Tìm">
     </form>
@@ -38,11 +32,16 @@
         <tr><th>Tên</th><th>Loại</th><th>SL</th><th>Chọn</th></tr>
         <%
         String k = request.getParameter("keyword");
+        boolean foundAny = false; // Biến cờ để kiểm tra có tìm thấy gì không
         if(k != null && !k.trim().isEmpty()) {
-            // 1. Tìm Món ăn
+            // Tìm Món ăn
             dao.FoodDAO fd = new dao.FoodDAO();
             ArrayList<Food> foods = fd.findFoodByName(k);
-            for(Food f : foods) {
+            
+            // Kiểm tra null 
+            if (foods != null && !foods.isEmpty()) {
+                foundAny = true;
+                for(Food f : foods) {
         %>
         <tr>
             <form action="doAddItem.jsp" method="post">
@@ -54,12 +53,17 @@
                 <td><input type="submit" value="Thêm"></td>
             </form>
         </tr>
-        <%  } 
+        <%      } 
+            }
         
-            // 2. Tìm Combo
+            // Tìm Combo
             dao.ComboDAO cd = new dao.ComboDAO();
             ArrayList<Combo> combos = cd.findComboByName(k);
-            for(Combo c : combos) {
+            
+            // Kiểm tra null 
+            if (combos != null && !combos.isEmpty()) {
+                foundAny = true;
+                for(Combo c : combos) {
         %>
         <tr>
             <form action="doAddItem.jsp" method="post">
@@ -71,7 +75,15 @@
                 <td><input type="submit" value="Thêm"></td>
             </form>
         </tr>
-        <%  } 
+        <%      } 
+            }
+            
+            // Nếu không tìm thấy cả món lẫn combo
+            if (!foundAny) {
+        %>
+            <tr><td colspan="4" style="text-align:center; color:red;">Không tìm thấy kết quả nào phù hợp!</td></tr>
+        <%
+            }
         } %>
     </table>
     

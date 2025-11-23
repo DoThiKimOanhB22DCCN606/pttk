@@ -7,6 +7,8 @@ import model.Order;
 import model.Staff;
 import model.FoodOrdered;
 import model.ComboOrdered;
+import model.Food;
+import model.Combo;
 
 public class OrderDAO extends DAO {
 
@@ -14,12 +16,12 @@ public class OrderDAO extends DAO {
         super();
     }
 
-    /*
-    Lấy danh sách toàn bộ đơn hàng và chi tiết của chúng.
+    /**
+     Retrieves all orders with details
      */
     public ArrayList<Order> getOrderInfo(Staff s) {
         ArrayList<Order> list = new ArrayList<>();
-        // 1. Lấy danh sách đơn hàng và thông tin khách hàng
+        // Join tblOrder with tblMember to get Customer info
         String sql = "SELECT o.*, m.Fullname, m.Number, m.Address "
                    + "FROM tblOrder o JOIN tblMember m ON o.tblMemberID = m.ID "
                    + "ORDER BY o.OrderedTime DESC";
@@ -37,15 +39,17 @@ public class OrderDAO extends DAO {
                 o.setStatus(rs.getString("Status"));
                 o.setOrderedTime(rs.getTimestamp("OrderedTime"));
                 o.setNote(rs.getString("Note"));
-                o.setTblMemberID(rs.getInt("tblMemberID"));
                 
-                o.setCustomerName(rs.getString("Fullname"));
-                o.setCustomerPhone(rs.getString("Number"));
-                o.setCustomerAddress(rs.getString("Address"));
+                // set info to Customer 
+                o.getCustomer().setId(rs.getInt("tblMemberID"));
+                o.getCustomer().setFullname(rs.getString("Fullname"));
+                o.getCustomer().setNumber(rs.getString("Number"));
+                o.getCustomer().setAddress(rs.getString("Address"));
 
-                //Lấy danh sách món ăn cho đơn hàng này
-                String sqlFood = "SELECT fo.*, f.Name, f.Price FROM tblFoodOrdered fo "
-                               + "JOIN tblFood f ON fo.tblFoodID = f.ID WHERE fo.tblOrderID = ?";
+                // Load Food Details
+                String sqlFood = "SELECT fo.*, f.Name, f.Price, f.Description, f.Status, f.Code "
+                               + "FROM tblFoodOrdered fo JOIN tblFood f ON fo.tblFoodID = f.ID "
+                               + "WHERE fo.tblOrderID = ?";
                 PreparedStatement psF = con.prepareStatement(sqlFood);
                 psF.setInt(1, o.getId());
                 ResultSet rsF = psF.executeQuery();
@@ -53,15 +57,24 @@ public class OrderDAO extends DAO {
                     FoodOrdered fo = new FoodOrdered();
                     fo.setId(rsF.getInt("ID"));
                     fo.setQuantity(rsF.getInt("Quantity"));
-                    fo.setFoodId(rsF.getInt("tblFoodID"));
-                    fo.setFoodName(rsF.getString("Name"));
-                    fo.setFoodPrice(rsF.getDouble("Price"));
+                    
+                    // set info to Food object inside FoodOrdered
+                    Food f = new Food();
+                    f.setId(rsF.getInt("tblFoodID"));
+                    f.setName(rsF.getString("Name"));
+                    f.setPrice(rsF.getDouble("Price"));
+                    f.setDescription(rsF.getString("Description"));
+                    f.setStatus(rsF.getString("Status"));
+                    f.setCode(rsF.getString("Code"));
+                    
+                    fo.setFood(f);
                     o.getListFood().add(fo);
                 }
 
-                //Lấy danh sách Combo cho đơn hàng này
-                String sqlCombo = "SELECT co.*, c.Name, c.Price FROM tblComboOrdered co "
-                                + "JOIN tblCombo c ON co.tblComboID = c.ID WHERE co.tblOrderID = ?";
+                // Load Combo Details
+                String sqlCombo = "SELECT co.*, c.Name, c.Price, c.Description, c.Code "
+                                + "FROM tblComboOrdered co JOIN tblCombo c ON co.tblComboID = c.ID "
+                                + "WHERE co.tblOrderID = ?";
                 PreparedStatement psC = con.prepareStatement(sqlCombo);
                 psC.setInt(1, o.getId());
                 ResultSet rsC = psC.executeQuery();
@@ -69,12 +82,18 @@ public class OrderDAO extends DAO {
                     ComboOrdered co = new ComboOrdered();
                     co.setId(rsC.getInt("ID"));
                     co.setQuantity(rsC.getInt("Quantity"));
-                    co.setComboId(rsC.getInt("tblComboID"));
-                    co.setComboName(rsC.getString("Name"));
-                    co.setComboPrice(rsC.getDouble("Price"));
+                    
+                    // set info to Combo object inside ComboOrdered
+                    Combo c = new Combo();
+                    c.setId(rsC.getInt("tblComboID"));
+                    c.setName(rsC.getString("Name"));
+                    c.setPrice(rsC.getDouble("Price"));
+                    c.setDescription(rsC.getString("Description"));
+                    c.setCode(rsC.getString("Code"));
+                    
+                    co.setCombo(c);
                     o.getListCombo().add(co);
                 }
-                // -------------------------------------------
 
                 list.add(o);
             }
@@ -85,16 +104,16 @@ public class OrderDAO extends DAO {
     }
 
     /**
-     * Cập nhật thông tin chung của đơn hàng (
+     updates general order info and customer info.
      */
     public boolean updateOrder(Order o) {
         String sqlOrder = "UPDATE tblOrder SET Total=?, Note=?, ShipFee=?, Discount=? WHERE ID=?";
         String sqlMember = "UPDATE tblMember SET Fullname=?, Number=?, Address=? WHERE ID=?";
         
         try {
-            con.setAutoCommit(false); // Bắt đầu transaction
+            con.setAutoCommit(false);
             
-            // Cập nhật bảng tblOrder
+            // Update tblOrder
             PreparedStatement ps1 = con.prepareStatement(sqlOrder);
             ps1.setDouble(1, o.getTotal());
             ps1.setString(2, o.getNote());
@@ -103,42 +122,41 @@ public class OrderDAO extends DAO {
             ps1.setInt(5, o.getId());
             ps1.executeUpdate();
 
-            // Cập nhật bảng tblMember
+            // Update tblMember 
             PreparedStatement ps2 = con.prepareStatement(sqlMember);
-            ps2.setString(1, o.getCustomerName());
-            ps2.setString(2, o.getCustomerPhone());
-            ps2.setString(3, o.getCustomerAddress());
-            ps2.setInt(4, o.getTblMemberID()); 
+            ps2.setString(1, o.getCustomer().getFullname());
+            ps2.setString(2, o.getCustomer().getNumber());
+            ps2.setString(3, o.getCustomer().getAddress());
+            ps2.setInt(4, o.getCustomer().getId());
             ps2.executeUpdate();
-
-            con.commit(); // Xác nhận lưu tất cả
-            return true;  
             
-        } catch(Exception e) {
-            try { con.rollback(); } catch(Exception ex){} // Nếu lỗi thì hoàn tác
+            con.commit();
+            return true;
+        } catch (Exception e) {
+            try { con.rollback(); } catch(Exception ex){}
             e.printStackTrace();
-            return false; // Trả về false nếu lỗi
+            return false;
         } finally {
             try { con.setAutoCommit(true); } catch(Exception ex){}
         }
     }
 
     /**
-     * Cập nhật danh sách món ăn 
+     * Updates the list of foods ordered for an order.
      */
     public boolean updateListFood(int orderId, ArrayList<FoodOrdered> listFood) {
         try {
-            //xóa cũ
             String sqlDel = "DELETE FROM tblFoodOrdered WHERE tblOrderID = ?";
             PreparedStatement psDel = con.prepareStatement(sqlDel);
             psDel.setInt(1, orderId);
             psDel.executeUpdate();
-            //thêm mới
+
             String sqlIns = "INSERT INTO tblFoodOrdered(tblOrderID, tblFoodID, Quantity) VALUES(?, ?, ?)";
             PreparedStatement psIns = con.prepareStatement(sqlIns);
             for (FoodOrdered fo : listFood) {
                 psIns.setInt(1, orderId);
-                psIns.setInt(2, fo.getFoodId());
+                // Access ID from the Food object
+                psIns.setInt(2, fo.getFood().getId()); 
                 psIns.setInt(3, fo.getQuantity());
                 psIns.executeUpdate();
             }
@@ -150,7 +168,7 @@ public class OrderDAO extends DAO {
     }
 
     /**
-     * Cập nhật danh sách Combo 
+     Updates the list of combos ordered for an order.
      */
     public boolean updateListCombo(int orderId, ArrayList<ComboOrdered> listCombo) {
         try {
@@ -163,7 +181,7 @@ public class OrderDAO extends DAO {
             PreparedStatement psIns = con.prepareStatement(sqlIns);
             for (ComboOrdered co : listCombo) {
                 psIns.setInt(1, orderId);
-                psIns.setInt(2, co.getComboId());
+                psIns.setInt(2, co.getCombo().getId());
                 psIns.setInt(3, co.getQuantity());
                 psIns.executeUpdate();
             }

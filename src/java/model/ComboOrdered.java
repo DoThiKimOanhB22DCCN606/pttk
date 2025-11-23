@@ -2,21 +2,23 @@ package model;
 
 public class ComboOrdered {
     private int id;
-    private int comboId;
-    private String comboName;
-    private double comboPrice;
     private int quantity;
+    private String note; 
+    private Combo combo; 
 
-    public ComboOrdered() {}
+    public ComboOrdered() {
+        this.combo = new Combo(); // Khởi tạo để tránh NullPointerException
+    }
 
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
-    public int getComboId() { return comboId; }
-    public void setComboId(int comboId) { this.comboId = comboId; }
-    public String getComboName() { return comboName; }
-    public void setComboName(String comboName) { this.comboName = comboName; }
-    public double getComboPrice() { return comboPrice; }
-    public void setComboPrice(double comboPrice) { this.comboPrice = comboPrice; }
+
     public int getQuantity() { return quantity; }
     public void setQuantity(int quantity) { this.quantity = quantity; }
+
+    public String getNote() { return note; }
+    public void setNote(String note) { this.note = note; }
+
+    public Combo getCombo() { return combo; }
+    public void setCombo(Combo combo) { this.combo = combo; }
 }

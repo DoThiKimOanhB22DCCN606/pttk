@@ -16,12 +16,9 @@ public class Member {
     public Member() {
     }
 
-    // --- Getters and Setters ---
-    
     public int getId() {
         return id;
     }
-
     public void setId(int id) {
         this.id = id;
     }
@@ -29,7 +26,6 @@ public class Member {
     public String getCode() {
         return code;
     }
-
     public void setCode(String code) {
         this.code = code;
     }
@@ -37,7 +33,6 @@ public class Member {
     public String getNumber() {
         return number;
     }
-
     public void setNumber(String number) {
         this.number = number;
     }
@@ -45,7 +40,6 @@ public class Member {
     public Date getBirth() {
         return birth;
     }
-
     public void setBirth(Date birth) {
         this.birth = birth;
     }
@@ -53,7 +47,6 @@ public class Member {
     public String getAddress() {
         return address;
     }
-
     public void setAddress(String address) {
         this.address = address;
     }
@@ -61,7 +54,6 @@ public class Member {
     public String getUsername() {
         return username;
     }
-
     public void setUsername(String username) {
         this.username = username;
     }
@@ -69,7 +61,6 @@ public class Member {
     public String getFullname() {
         return fullname;
     }
-
     public void setFullname(String fullname) {
         this.fullname = fullname;
     }
@@ -77,7 +68,6 @@ public class Member {
     public String getPassword() {
         return password;
     }
-
     public void setPassword(String password) {
         this.password = password;
     }
@@ -85,7 +75,6 @@ public class Member {
     public String getRole() {
         return role;
     }
-
     public void setRole(String role) {
         this.role = role;
     }

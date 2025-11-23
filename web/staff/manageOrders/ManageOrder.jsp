@@ -13,26 +13,26 @@
 </head>
 <body>
     <%
-    // Kiểm tra đăng nhập
+    //get staff from ss
     Staff staff = (Staff) session.getAttribute("nhanvien");
     if(staff == null) { response.sendRedirect("../../member/Login.jsp"); return; }
 
-    //Lấy các list từ Session
+    // Get lists from Session
     ArrayList<Order> pendingList = (ArrayList<Order>) session.getAttribute("pendingOrderList");
     ArrayList<Order> acceptedList = (ArrayList<Order>) session.getAttribute("acceptedOrderList");
     ArrayList<Order> canceledList = (ArrayList<Order>) session.getAttribute("canceledOrderList");
 
-    // Nếu chưa có hoặc có yêu cầu tải lại 
+    //back=true or lists empty
     if(request.getParameter("back") != null || pendingList == null) {
         OrderDAO dao = new OrderDAO();
-        ArrayList<Order> allOrders = dao.getOrderInfo(staff); // Lấy tất cả đơn hàng
+        ArrayList<Order> allOrders = dao.getOrderInfo(staff); 
         
-        // Khởi tạo lại các list
+        // Initialize lists
         pendingList = new ArrayList<>();
         acceptedList = new ArrayList<>();
         canceledList = new ArrayList<>();
         
-        // Lọc dữ liệu 
+        //Filter all orders into 3 lists
         for(Order o : allOrders) {
             if("Đã đặt".equalsIgnoreCase(o.getStatus())) {
                 pendingList.add(o);
@@ -43,7 +43,7 @@
             }
         }
         
-        // Lưu lại vào Session
+        // Save 3 lists to Session
         session.setAttribute("pendingOrderList", pendingList);
         session.setAttribute("acceptedOrderList", acceptedList);
         session.setAttribute("canceledOrderList", canceledList);
@@ -64,9 +64,9 @@
             <tr>
                 <td><%=i++%></td>
                 <td><%=o.getCode()%></td>
-                <td><%=o.getCustomerName()%></td>
-                <td><%=o.getCustomerPhone()%></td>
-                <td><%=o.getCustomerAddress()%></td>
+                <td><%=o.getCustomer().getFullname()%></td>
+                <td><%=o.getCustomer().getNumber()%></td>
+                <td><%=o.getCustomer().getAddress()%></td>
                 <td><%=o.getOrderedTime()%></td>
                 <td><%=o.getNote()%></td>
                 <td><%=o.getFoodListAsString()%></td>
@@ -88,7 +88,7 @@
     <table>
         <tr><th>TT</th><th>Mã ĐH</th><th>Tên KH</th><th>TG duyệt</th></tr>
         <% int j=1; for(Order o : acceptedList) { %>
-        <tr><td><%=j++%></td><td><%=o.getCode()%></td><td><%=o.getCustomerName()%></td><td><%=o.getOrderedTime()%></td></tr>
+        <tr><td><%=j++%></td><td><%=o.getCode()%></td><td><%=o.getCustomer().getFullname()%></td><td><%=o.getOrderedTime()%></td></tr>
         <% } %>
     </table>
 
@@ -96,7 +96,7 @@
     <table>
         <tr><th>TT</th><th>Mã ĐH</th><th>Tên KH</th><th>TG hủy</th><th>Lý do hủy</th></tr>
         <% int k=1; for(Order o : canceledList) { %>
-        <tr><td><%=k++%></td><td><%=o.getCode()%></td><td><%=o.getCustomerName()%></td><td><%=o.getOrderedTime()%></td><td><%=o.getNote()%></td></tr>
+        <tr><td><%=k++%></td><td><%=o.getCode()%></td><td><%=o.getCustomer().getFullname()%></td><td><%=o.getOrderedTime()%></td><td><%=o.getNote()%></td></tr>
         <% } %>
     </table>
 

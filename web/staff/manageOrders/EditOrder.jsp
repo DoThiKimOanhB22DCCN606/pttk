@@ -1,5 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" 
-    import="model.Order, model.FoodOrdered, model.ComboOrdered, dao.OrderDAO, java.util.ArrayList"%>
+    import="model.Order, model.FoodOrdered, model.ComboOrdered, java.util.ArrayList"%>
 <!DOCTYPE html>
 <html>
 <head>
@@ -17,15 +17,12 @@
     String code = request.getParameter("code");
     Order o = null;
     
-    // Tìm order trong Session List 
     if(code != null) {
-        // Lấy danh sách từ session 
+        // Get order from pendinglist in Session 
         ArrayList<Order> list = (ArrayList<Order>) session.getAttribute("pendingOrderList");
-        
         if(list != null) {
             for(Order order : list) {
                 if(order.getCode().equals(code)) {
-                    //Lấy trực tiếp object từ list
                     o = order;
                     session.setAttribute("orderToEdit", o);
                     break;
@@ -33,15 +30,10 @@
             }
         }
     } else {
-        // quay lại từ trang thêm món/sửa món
         o = (Order) session.getAttribute("orderToEdit");
     }
     
-    // Nếu không tìm thấy thì quay về trang quản lý
-    if(o == null) { 
-        response.sendRedirect("ManageOrder.jsp"); 
-        return; 
-    }
+    if(o == null) { response.sendRedirect("ManageOrder.jsp"); return; }
     %>
 
     <h3>Edit Order</h3>
@@ -50,19 +42,18 @@
         <table>
             <tr>
                 <th>Mã ĐH</th><th>Tên KH</th><th>SĐT KH</th><th>ĐC KH</th><th>TG đặt</th>
-                <th>Ghi chú</th><th>Mã giảm giá</th><th>Phí vận chuyển</th><th>Trạng thái</th><th>Tổng tiền</th>
+                <th>Ghi chú</th><th>Mã giảm giá</th><th>Phí vận chuyển</th><th>Trạng thái</th>
             </tr>
             <tr>
                 <td><%=o.getCode()%></td>
-                <td><input type="text" name="cusName" value="<%=o.getCustomerName()%>"></td>
-                <td><input type="text" name="cusPhone" value="<%=o.getCustomerPhone()%>"></td>
-                <td><input type="text" name="cusAddr" value="<%=o.getCustomerAddress()%>"></td>
+                <td><input type="text" name="cusName" value="<%=o.getCustomer().getFullname()%>"></td>
+                <td><input type="text" name="cusPhone" value="<%=o.getCustomer().getNumber()%>"></td>
+                <td><input type="text" name="cusAddr" value="<%=o.getCustomer().getAddress()%>"></td>
                 <td><%=o.getOrderedTime()%></td>
                 <td><input type="text" name="note" value="<%=(o.getNote()==null)?"":o.getNote()%>"></td>
                 <td><%=(long)o.getDiscount()%></td>
                 <td><%=(long)o.getShipFee()%></td>
                 <td><%=o.getStatus()%></td>
-                <td><%=String.format("%,.0f", o.getTotal())%></td>
             </tr>
         </table>
 
@@ -75,7 +66,7 @@
                     FoodOrdered f = o.getListFood().get(i); 
             %>
             <tr>
-                <td><%=f.getFoodName()%></td>
+                <td><%=f.getFood().getName()%></td>
                 <td><input type="number" name="qty_food_<%=i%>" value="<%=f.getQuantity()%>" style="width:50px"></td>
                 <td>
                     <button type="submit" name="action_edit_food" value="<%=i%>">Sửa</button> 
@@ -95,7 +86,7 @@
                     ComboOrdered c = o.getListCombo().get(i); 
             %>
             <tr>
-                <td><%=c.getComboName()%></td>
+                <td><%=c.getCombo().getName()%></td>
                 <td><input type="number" name="qty_combo_<%=i%>" value="<%=c.getQuantity()%>" style="width:50px"></td>
                 <td>
                     <button type="submit" name="action_edit_combo" value="<%=i%>">Sửa</button> 

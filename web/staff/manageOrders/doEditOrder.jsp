@@ -5,48 +5,57 @@
     Order o = (Order) session.getAttribute("orderToEdit");
     if(o == null) { response.sendRedirect("ManageOrder.jsp"); return; }
 
-    // CẬP NHẬT THÔNG TIN INPUT VÀO SESSION
-    o.setCustomerName(request.getParameter("cusName"));
-    o.setCustomerPhone(request.getParameter("cusPhone"));
-    o.setCustomerAddress(request.getParameter("cusAddr"));
+    // Update session object from input
+    o.getCustomer().setFullname(request.getParameter("cusName"));
+    o.getCustomer().setNumber(request.getParameter("cusPhone"));
+    o.getCustomer().setAddress(request.getParameter("cusAddr"));
+    
     o.setNote(request.getParameter("note"));
+    try { o.setDiscount(Double.parseDouble(request.getParameter("discount"))); } catch(Exception e) {}
+    try { o.setShipFee(Double.parseDouble(request.getParameter("shipFee"))); } catch(Exception e) {}
 
-    // XỬ LÝ ACTION
+    // Handle clicking save
     if(request.getParameter("save") != null) {
-        // Tính lại tổng tiền
+        // Recalculate total
         double subTotal = 0;
-        for(FoodOrdered f : o.getListFood()) subTotal += f.getFoodPrice() * f.getQuantity();
-        for(ComboOrdered c : o.getListCombo()) subTotal += c.getComboPrice() * c.getQuantity();
+        for(FoodOrdered f : o.getListFood()) subTotal += f.getFood().getPrice() * f.getQuantity();
+        for(ComboOrdered c : o.getListCombo()) subTotal += c.getCombo().getPrice() * c.getQuantity();
+        
         o.setTotal(subTotal + o.getShipFee() - o.getDiscount());
         
-        //gọi hàm Update
         OrderDAO dao = new OrderDAO();
-        dao.updateOrder(o); // Update Order Info
-        dao.updateListFood(o.getId(), o.getListFood()); // Update Food
-        dao.updateListCombo(o.getId(), o.getListCombo()); // Update Combo
+        //update general info
+        dao.updateOrder(o); 
+        //update list food ordered
+        dao.updateListFood(o.getId(), o.getListFood());
+        //update list combo ordered
+        dao.updateListCombo(o.getId(), o.getListCombo());
         
-        // Xóa session để reload
         session.removeAttribute("orderToEdit");
-        session.removeAttribute("pendingOrderList"); // Buộc ManageOrder load lại từ DB
+        session.removeAttribute("pendingOrderList"); 
         response.sendRedirect("ManageOrder.jsp?back=true");
-        
+    
+    //handle edit food
     } else if(request.getParameter("action_edit_food") != null) {
         int idx = Integer.parseInt(request.getParameter("action_edit_food"));
         int qty = Integer.parseInt(request.getParameter("qty_food_" + idx));
         o.getListFood().get(idx).setQuantity(qty);
         response.sendRedirect("EditOrder.jsp");
         
+    //handlfe remove food
     } else if(request.getParameter("action_remove_food") != null) {
         int idx = Integer.parseInt(request.getParameter("action_remove_food"));
         o.getListFood().remove(idx);
         response.sendRedirect("EditOrder.jsp");
         
+    //handle edit combo
     } else if(request.getParameter("action_edit_combo") != null) {
         int idx = Integer.parseInt(request.getParameter("action_edit_combo"));
         int qty = Integer.parseInt(request.getParameter("qty_combo_" + idx));
         o.getListCombo().get(idx).setQuantity(qty);
         response.sendRedirect("EditOrder.jsp");
         
+    //handle remove combo
     } else if(request.getParameter("action_remove_combo") != null) {
         int idx = Integer.parseInt(request.getParameter("action_remove_combo"));
         o.getListCombo().remove(idx);

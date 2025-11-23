@@ -11,7 +11,7 @@
     String code = request.getParameter("code");
     ArrayList<Order> list = (ArrayList<Order>) session.getAttribute("pendingOrderList");
     Order o = null;
-    
+    //find order to cancel
     if(list != null) {
         for(Order ord : list) {
             if(ord.getCode().equals(code)) {
