@@ -1,36 +1,34 @@
 package dao;
+
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import model.OrderCancelByCustomer;
 
 public class OrderCancelByCustomerDAO extends DAO {
-    public OrderCancelByCustomerDAO() { super(); }
 
-    public boolean cancelOrder(OrderCancelByCustomer oc) {
-        String sqlUpdate = "UPDATE tblOrder SET Status = 'Đã hủy', Note = ? WHERE ID = ?";
-        String sqlInsert = "INSERT INTO tblOrderCancelByCustomer(tblOrderID, CanceledTime, Reason) VALUES (?, NOW(), ?)";
+    public OrderCancelByCustomerDAO() {
+        super();
+    }
+
+    public void addOrderCancel(OrderCancelByCustomer oc) {
+        String sql1 = "INSERT INTO tblOrderCancelByCustomer (canceledTime, reason, tblOrderID) VALUES (?, ?, ?)";
+        String sql2 = "UPDATE tblOrder SET status = 'Cancelled' WHERE id = ?";
+
         try {
-            con.setAutoCommit(false);
-            
-            // Update trạng thái Order (kèm lý do vào Note cho tiện theo dõi)
-            PreparedStatement ps1 = con.prepareStatement(sqlUpdate);
-            ps1.setString(1, oc.getReason());
-            ps1.setInt(2, oc.getTblOrderID());
+            // 1. Insert bảng Hủy
+            PreparedStatement ps1 = con.prepareStatement(sql1);
+            ps1.setTimestamp(1, new java.sql.Timestamp(oc.getCanceledTime().getTime()));
+            ps1.setString(2, oc.getReason());
+            ps1.setInt(3, oc.getId()); 
             ps1.executeUpdate();
-            
-            // Insert vào bảng Cancel
-            PreparedStatement ps2 = con.prepareStatement(sqlInsert);
-            ps2.setInt(1, oc.getTblOrderID());
-            ps2.setString(2, oc.getReason());
+
+            // 2. Update bảng Order
+            PreparedStatement ps2 = con.prepareStatement(sql2);
+            ps2.setInt(1, oc.getId());
             ps2.executeUpdate();
-            
-            con.commit();
-            return true;
-        } catch(Exception e) {
-            try { con.rollback(); } catch(Exception ex){}
+
+        } catch (SQLException e) {
             e.printStackTrace();
-            return false;
-        } finally {
-            try { con.setAutoCommit(true); } catch(Exception ex){}
         }
     }
 }

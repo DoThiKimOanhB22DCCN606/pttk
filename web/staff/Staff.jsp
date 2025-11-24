@@ -20,6 +20,6 @@
     
     <button onclick="openPage('manageFood/ManageFood.jsp')">quản lý thông tin món ăn</button>
     <button onclick="openPage('manageOrders/ManageOrder.jsp')">quản lý danh sách các đơn hàng chờ duyệt</button>
-    <button onclick="openPage('#')">giao hàng cho NVGH</button>
+    <button onclick="openPage('pickUpOrders/SearchShipper.jsp')">giao hàng cho NVGH</button>
 </body>
 </html>

@@ -1,5 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"
-    import="dao.OrderCancelByCustomerDAO, model.Order, model.OrderCancelByCustomer"%>
+    import="dao.OrderCancelByCustomerDAO, model.Order, model.OrderCancelByCustomer, java.util.Date"%>
 <%
     request.setCharacterEncoding("UTF-8");
     String reason = request.getParameter("reason");
@@ -8,26 +8,20 @@
     Order o = (Order) session.getAttribute("orderToCancel");
     
     if(o != null) {
-        // Tạo object
-        OrderCancelByCustomer oc = new OrderCancelByCustomer();
-        oc.setTblOrderID(o.getId());
-        oc.setReason(reason);
+        // Khởi tạo bằng Constructor (Order, Date, Reason) 
+        OrderCancelByCustomer oc = new OrderCancelByCustomer(o, new Date(), reason);
         
         // Gọi DAO 
         OrderCancelByCustomerDAO dao = new OrderCancelByCustomerDAO();
-        boolean result = dao.cancelOrder(oc);
         
-        if(result) {
-            // Clear Session
-            session.removeAttribute("pendingOrderList");
-            session.removeAttribute("acceptedOrderList");
-            session.removeAttribute("canceledOrderList");
-            session.removeAttribute("orderToCancel");
-            
-            response.sendRedirect("ManageOrder.jsp");
-        } else {
-            response.sendRedirect("ManageOrder.jsp?err=db");
-        }
+        // Clear Session
+        session.removeAttribute("pendingOrderList");
+        session.removeAttribute("acceptedOrderList");
+        session.removeAttribute("canceledOrderList");
+        session.removeAttribute("orderToCancel");
+
+        response.sendRedirect("ManageOrder.jsp");
+        
     } else {
         response.sendRedirect("ManageOrder.jsp");
     }

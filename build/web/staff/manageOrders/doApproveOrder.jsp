@@ -1,3 +1,5 @@
+<%@page import="java.util.Date"%>
+<%@page import="model.Staff"%>
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"
     import="dao.OrderAcceptedDAO, model.Order, model.OrderAccepted, java.util.ArrayList"%>
 <%
@@ -16,24 +18,24 @@
     }
     
     if(target != null) {
-        // Tạo OrderAccepted
-        OrderAccepted oa = new OrderAccepted();
-        oa.setTblOrderID(target.getId());
-        
-        // Gọi DAO 
-        OrderAcceptedDAO dao = new OrderAcceptedDAO();
-        boolean result = dao.acceptOrder(oa);
-        
-        if(result) {
-            //Xóa Session để ManageOrder.jsp tự load lại dữ liệu mới từ DB
-            session.removeAttribute("pendingOrderList");
-            session.removeAttribute("acceptedOrderList");
-            session.removeAttribute("canceledOrderList");
-            response.sendRedirect("ManageOrder.jsp");
-        } else {
-            // Lỗi DB
-            response.sendRedirect("ManageOrder.jsp?err=db");
+        // Lấy nhân viên đang đăng nhập (để biết ai duyệt đơn này)
+        Staff currentStaff = (Staff) session.getAttribute("staff"); 
+        if(currentStaff != null) {
+            target.setStaff(currentStaff);
         }
+
+        // Khởi tạo OrderAccepted bằng Constructor (Order, Date)
+        OrderAccepted oa = new OrderAccepted(target, new Date());
+        
+        // Gọi DAO
+        OrderAcceptedDAO dao = new OrderAcceptedDAO();
+        
+        dao.addOrderAccepted(oa);
+        //Xóa Session để ManageOrder.jsp tự load lại dữ liệu mới từ DB
+        session.removeAttribute("pendingOrderList");
+        session.removeAttribute("acceptedOrderList");
+        session.removeAttribute("canceledOrderList");
+        response.sendRedirect("ManageOrder.jsp");
     } else {
         // Không tìm thấy trong session
         response.sendRedirect("ManageOrder.jsp?err=notfound");
