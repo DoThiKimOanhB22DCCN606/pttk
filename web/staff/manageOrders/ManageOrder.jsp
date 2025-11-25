@@ -25,7 +25,7 @@
     //back=true or lists empty
     if(request.getParameter("back") != null || pendingList == null) {
         OrderDAO dao = new OrderDAO();
-        ArrayList<Order> allOrders = dao.getOrderInfo(staff); 
+        ArrayList<Order> allOrders = dao.getOrderInfo(); 
         
         // Initialize lists
         pendingList = new ArrayList<>();
@@ -34,11 +34,11 @@
         
         //Filter all orders into 3 lists
         for(Order o : allOrders) {
-            if("Đã đặt".equalsIgnoreCase(o.getStatus())) {
+            if("Ordered".equalsIgnoreCase(o.getStatus())) {
                 pendingList.add(o);
-            } else if("Đã duyệt".equalsIgnoreCase(o.getStatus())) {
+            } else if("Approved".equalsIgnoreCase(o.getStatus())) {
                 acceptedList.add(o);
-            } else if("Đã hủy".equalsIgnoreCase(o.getStatus())) {
+            } else if("Cancelled".equalsIgnoreCase(o.getStatus())) {
                 canceledList.add(o);
             }
         }

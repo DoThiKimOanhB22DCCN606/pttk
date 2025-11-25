@@ -14,34 +14,42 @@
     </head>
     <body>
         <%
-            // Nhận tham số shipperCode từ SearchShipper.jsp
+            // 1. Nhận tham số
             String shipperCode = request.getParameter("shipperCode");
             
-            // Lấy thông tin từ Session (Staff, ShipperList)
+
             ArrayList<Shipper> shipperList = (ArrayList<Shipper>) session.getAttribute("shipperList");
             Shipper currentShipper = null;
 
-            // Tìm đối tượng Shipper trong danh sách dựa vào code
+            // 3. Tìm đối tượng Shipper
             if (shipperList != null && shipperCode != null) {
                 for (Shipper s : shipperList) {
-                    if (s.getCode().equals(shipperCode)) {
+                    if (shipperCode.equals(s.getCode())) { // So sánh an toàn
                         currentShipper = s;
                         break;
                     }
                 }
             }
             
-            // Lưu shipper hiện tại vào session để các trang sau (doPickUp, Cancel) dùng
+            // Nếu không tìm thấy trong list (có thể do reload trang mất param), thử lấy từ session cũ
+            if (currentShipper == null) {
+                currentShipper = (Shipper) session.getAttribute("currentShipper");
+            }
+
+            if (currentShipper == null) {
+                response.sendRedirect("SearchShipper.jsp");
+                return;
+            }
+            
+            // Lưu shipper hiện tại
             session.setAttribute("currentShipper", currentShipper);
             
-
-            
-            // Gọi DAO lấy danh sách đơn hàng (getOrderInfo)
-            // Theo thiết kế: Lấy 1 list tổng rồi tự lọc
+            // 4. Gọi DAO lấy danh sách đơn hàng
             OrderAcceptedDAO oaDAO = new OrderAcceptedDAO();
+            // Truyền tham số staff vào hàm getOrderInfo
             ArrayList<OrderAccepted> allOrders = oaDAO.getOrderInfo(); 
             
-            // Lọc đơn hàng thành 3 danh sách
+            // 5. Lọc đơn hàng
             ArrayList<OrderAccepted> pendingList = new ArrayList<>();
             ArrayList<OrderPickUpByShipper> deliveringList = new ArrayList<>();
             ArrayList<OrderCancelByShipper> cancelledList = new ArrayList<>();
@@ -54,22 +62,20 @@
                     if ("Approved".equalsIgnoreCase(status)) {
                         pendingList.add(order);
                     } 
-                    // Danh sách 2: Đơn đang giao bởi Shipper này
+                    // Danh sách 2: Đang giao
                     else if ("Shipping".equalsIgnoreCase(status)) {
                         if(order instanceof OrderPickUpByShipper) {
                             OrderPickUpByShipper orderPU = (OrderPickUpByShipper) order;
-                            // Kiểm tra đúng shipper này đang giao không
-                            if(orderPU.getShipper().getId() == currentShipper.getId()){
+                            if(orderPU.getShipper() != null && orderPU.getShipper().getId() == currentShipper.getId()){
                                 deliveringList.add(orderPU);
                             }
                         }
                     } 
-                    // Danh sách 3: Đơn đã hủy bởi Shipper này
-                    else if ("Cancelled".equalsIgnoreCase(status) || "ShippingCancelled".equalsIgnoreCase(status)) { // Tùy status DB bạn quy định
+                    // Danh sách 3: Đã hủy
+                    else if ("Cancelled".equalsIgnoreCase(status)) {
                          if(order instanceof OrderCancelByShipper) {
                             OrderCancelByShipper orderCancel = (OrderCancelByShipper) order;
-                            // Kiểm tra đúng shipper này hủy không (thông qua orderPickUp cha)
-                            if(orderCancel.getShipper().getId() == currentShipper.getId()){
+                            if(orderCancel.getShipper() != null && orderCancel.getShipper().getId() == currentShipper.getId()){
                                 cancelledList.add(orderCancel);
                             }
                         }
@@ -77,7 +83,6 @@
                 }
             }
             
-            // Lưu 3 danh sách vào Session 
             session.setAttribute("pendingList", pendingList);
             session.setAttribute("deliveringList", deliveringList);
             session.setAttribute("cancelledList", cancelledList);
@@ -94,19 +99,14 @@
                 <th>Tổng tiền</th>
                 <th>Chọn</th>
             </tr>
-            <% 
-                if (pendingList != null && !pendingList.isEmpty()) {
-                    for (OrderAccepted o : pendingList) { 
-            %>
+            <% if (pendingList != null) { for (OrderAccepted o : pendingList) { %>
             <tr>
                 <td><%= o.getCode() %></td>
-                <td><%= o.getTotal() %></td>
+                <td><%= o.getCustomer().getAddress() %></td>
+                <td><%= String.format("%,.0f", o.getTotal()) %></td>
                 <td><a href="doPickUpOrder.jsp?orderCode=<%= o.getCode() %>">Nhận đơn</a></td>
             </tr>
-            <% 
-                    }
-                } 
-            %>
+            <% }} %>
         </table>
 
         <h3>Danh sách đơn hàng đang giao</h3>
@@ -116,19 +116,13 @@
                 <th>Thời gian nhận</th>
                 <th>Hành động</th>
             </tr>
-            <% 
-                if (deliveringList != null && !deliveringList.isEmpty()) {
-                    for (OrderPickUpByShipper o : deliveringList) { 
-            %>
+            <% if (deliveringList != null) { for (OrderPickUpByShipper o : deliveringList) { %>
             <tr>
                 <td><%= o.getCode() %></td>
                 <td><%= o.getPickUpTime() %></td>
                 <td><a href="CancelShipperOrder.jsp?orderCode=<%= o.getCode() %>">Hủy đơn</a></td>
             </tr>
-            <% 
-                    }
-                } 
-            %>
+            <% }} %>
         </table>
 
         <h3>Danh sách đơn hàng đã hủy</h3>
@@ -138,19 +132,13 @@
                 <th>Lý do hủy</th>
                 <th>Thời gian hủy</th>
             </tr>
-            <% 
-                if (cancelledList != null && !cancelledList.isEmpty()) {
-                    for (OrderCancelByShipper o : cancelledList) { 
-            %>
+            <% if (cancelledList != null) { for (OrderCancelByShipper o : cancelledList) { %>
             <tr>
                 <td><%= o.getCode() %></td>
                 <td><%= o.getReason() %></td>
                 <td><%= o.getCanceledTime() %></td>
             </tr>
-            <% 
-                    }
-                } 
-            %>
+            <% }} %>
         </table>
         
         <br>

@@ -29,6 +29,7 @@ public class FoodDAO extends DAO {
                 food.setPrice(rs.getDouble("Price"));
                 food.setStatus(rs.getString("Status"));
                 food.setCode(rs.getString("Code"));
+                
                 kq.add(food);
             }
         } catch (Exception e) {
@@ -43,7 +44,7 @@ public class FoodDAO extends DAO {
      */
     public Food getFoodById(int foodId) {
         Food food = null;
-        String sql = "SELECT * FROM tblFood WHERE ID = ?"; // SQL thuần
+        String sql = "SELECT * FROM tblFood WHERE ID = ?"; 
 
         try {
             PreparedStatement ps = con.prepareStatement(sql);
@@ -77,7 +78,7 @@ public class FoodDAO extends DAO {
             ps.setString(2, food.getDescription());
             ps.setDouble(3, food.getPrice());
             ps.setString(4, food.getStatus());
-            ps.setInt(5, food.getId()); // Tham số 'WHERE' ở cuối
+            ps.setInt(5, food.getId()); 
             
             ps.executeUpdate();
             return true;

@@ -5,10 +5,10 @@
 <%
     String code = request.getParameter("code");
     
-    // Tìm Order trong Session Pending List
+    // 1. Tìm Order trong Session Pending List
     ArrayList<Order> list = (ArrayList<Order>) session.getAttribute("pendingOrderList");
     Order target = null;
-    if(list != null) {
+    if(list != null && code != null) {
         for(Order o : list) {
             if(o.getCode().equals(code)) {
                 target = o;
@@ -18,26 +18,33 @@
     }
     
     if(target != null) {
-        // Lấy nhân viên đang đăng nhập (để biết ai duyệt đơn này)
-        Staff currentStaff = (Staff) session.getAttribute("staff"); 
-        if(currentStaff != null) {
-            target.setStaff(currentStaff);
+        // 2. Lấy nhân viên đang đăng nhập (SỬA: dùng đúng tên session "nhanvien")
+        Staff currentStaff = (Staff) session.getAttribute("nhanvien"); 
+        
+        // Kiểm tra kỹ: Nếu staff null thì đá về trang login
+        if(currentStaff == null) {
+             response.sendRedirect("../../member/Login.jsp");
+             return;
         }
 
-        // Khởi tạo OrderAccepted bằng Constructor (Order, Date)
+        // 3. Gán nhân viên vào đơn hàng (SỬA: dùng biến 'target')
+        target.setStaff(currentStaff);
+
+        // 4. Khởi tạo OrderAccepted (Constructor này đã đúng với Model bạn sửa)
         OrderAccepted oa = new OrderAccepted(target, new Date());
         
-        // Gọi DAO
+        // 5. Gọi DAO
         OrderAcceptedDAO dao = new OrderAcceptedDAO();
-        
         dao.addOrderAccepted(oa);
-        //Xóa Session để ManageOrder.jsp tự load lại dữ liệu mới từ DB
+        
+        // 6. Xóa Session để ManageOrder.jsp tự load lại dữ liệu mới từ DB
         session.removeAttribute("pendingOrderList");
         session.removeAttribute("acceptedOrderList");
         session.removeAttribute("canceledOrderList");
+        
         response.sendRedirect("ManageOrder.jsp");
     } else {
-        // Không tìm thấy trong session
+        // Không tìm thấy đơn hàng
         response.sendRedirect("ManageOrder.jsp?err=notfound");
     }
 %>

@@ -18,7 +18,7 @@ public class OrderAcceptedDAO extends DAO {
     }
 
     public void addOrderAccepted(OrderAccepted oa) {
-        String sql1 = "INSERT INTO tblOrderAccepted (acceptedTime, tblOrderID, staffID) VALUES (?, ?, ?)";
+        String sql1 = "INSERT INTO tblOrderAccepted (AcceptedTime, tblOrderID, staffID) VALUES (?, ?, ?)";
         String sql2 = "UPDATE tblOrder SET status = 'Approved' WHERE id = ?";
 
         try {

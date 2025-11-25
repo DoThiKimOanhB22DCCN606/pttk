@@ -19,7 +19,7 @@ public class OrderDAO extends DAO {
     /**
      Retrieves all orders with details
      */
-    public ArrayList<Order> getOrderInfo(Staff s) {
+    public ArrayList<Order> getOrderInfo() {
         ArrayList<Order> list = new ArrayList<>();
         // Join tblOrder with tblMember to get Customer info
         String sql = "SELECT o.*, m.Fullname, m.Number, m.Address "
